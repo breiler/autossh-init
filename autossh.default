@@ -8,6 +8,11 @@ autossh_opts -M 0 -q -N -f -o ServerAliveCountMax=3 \
 # Uncomment for making the local ssh server available on the remote server on port 2022
 # tunnel -R 2022:localhost:22 autossh@remote
 
+# If you need to bind the address to other than localhost you need to specify the
+# bind address. You may also need to change the remote server /etc/ssh/sshd_config
+# and set the property "GatewayPorts yes"
+# tunnel -R *:2022:localhost:22 autossh@remote
+
 # Uncomment for making the local ssh server available on the remote server on port 2022,
 # but where the remote ssh server is listening to port 1234
 # tunnel -R 2022:localhost:22 autossh@remote -p 1234
