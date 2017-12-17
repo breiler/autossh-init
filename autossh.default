@@ -5,5 +5,13 @@ AUTOSSH_USER=autossh
 autossh_opts -M 0 -q -N -f -o ServerAliveCountMax=3 \
                            -o ServerAliveInterval=60
 
-# tunnel -L 3333:localhost:4444 -L 4444:localhost:5555  autossh@host1
-# tunnel -L 5555:localhost:6666                         autossh@host2
+# Uncomment for making the local ssh server available on the remote server on port 2022
+# tunnel -R 2022:localhost:22 autossh@remote
+
+# Uncomment for making the local ssh server available on the remote server on port 2022,
+# but where the remote ssh server is listening to port 1234
+# tunnel -R 2022:localhost:22 autossh@remote -p 1234
+
+# Uncomment for making the remote mysql server on port 3306 be available on
+# the local server on port 2006
+# tunnel -L 2006:localhost:3306 autossh@remote

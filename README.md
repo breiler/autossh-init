@@ -1,76 +1,79 @@
-[]: {{{1
+# AutoSSH init.d script
 
-    File        : README.md
-    Maintainer  : Felix C. Stegerman <flx@obfusk.net>
-    Date        : 2013-11-09
+autossh-init - AutoSSH init script for starting a reverse SSH tunnel as a service.
 
-    Copyright   : Copyright (C) 2013  Felix C. Stegerman
-    Version     : 0.0.1
+I want to backup my remote server via SSH/rsync to my home Linux server which is behind a NAT, and has a private IP address. Port forwarding could be used but my home public IP can change at any time. With AutoSSH I can instead let my local home server connect to the web server I want to backup, and have it connect back to the home server creating a SSH-tunnel.
 
-[]: }}}1
-
-## Description
-[]: {{{1
-
-  autossh-init - AutoSSH init script
-
-[]: }}}1
+AutoSSH will also monitor the connectivity of the tunnel and re-establish the connection if dropped.
 
 ## Usage
-[]: {{{1
 
-  local & remote:
+### Create a restricted user
+
+Add a restricted user on the **local and remote** machine:
 
     $ adduser --system --group --shell /bin/false \
       --home /var/lib/autossh --disabled-password autossh
 
-  local:
 
-    autossh$ ssh-keygen
-    # <<PUBKEY>> below is the contents of ~/.ssh/id_rsa.pub here
+### Generate SSH key
 
-  remote:
+Generate a ssh key for the autossh user on the **local** machine. The key `<<PUBKEY>>` below is the contents of the generated file */var/lib/autossh/.ssh/id_rsa.pub*:
 
-    autossh$ vim ~/.ssh/authorized_keys
-    # on a single line, add:
-    #   command="/bin/false",no-agent-forwarding,no-pty,
-    #   no-X11-forwarding,permitopen="host1:port1",
-    #   permitopen="host2:port2" <<PUBKEY>>
+    $ su -s /bin/bash -c /usr/bin/ssh-keygen autossh
 
-  local:
+
+### Add SSH key to authorized keys
+
+Add the `<<PUBKEY>>` to the authorized keys file on the **remote** machine to allow passwordless authentication:
+
+	$ su -s /bin/bash -c 'echo <<PUBKEY>> >> ~/.ssh/authorized_keys' autossh
+    
+Optionally if more security is required one could restrict so no shell can be started:
+
+    $ su -s /bin/bash -c \
+    'echo "command=\"/bin/false\",no-agent-forwarding,no-pty,no-X11-forwarding <<PUBKEY>>" >> ~/.ssh/authorized_keys' autossh
+
+Even more security can be achieved allowing only connections from certain hosts:
+
+    $ su -s /bin/bash -c \
+    'echo "command=\"/bin/false\",no-agent-forwarding,no-pty,no-X11-forwarding,permitopen=\"host1:port1\", permitopen=\"host2:port2\" <<PUBKEY>>" >> ~/.ssh/authorized_keys' autossh
+    
+    
+### Verify passwordless authentication
+
+On the **local** machine, try to connect to the remote server and confirm the fingerprint
+
+	$ su -s /bin/bash -c 'ssh autossh@remote FAIL' autossh
+
+        
+### Install the service
+
+On the **local** machine, copy the autossh.init-script and the configuration.
 
     $ cp -i autossh.init /etc/init.d/autossh
+    $ chmod +x /etc/init.d/autossh
     $ update-rc.d autossh defaults
 
-    $ cp -i autossh.default /etc/default/autossh
-    $ vim /etc/default/autossh
-
-    autossh$ ssh autossh@remote FAIL  # confirm fingerprint
-    # alternatively -- and less securely! -- you can disable
-    # StrictHostKeyChecking in the autossh_opts
-
+    $ cp -i autossh.default /etc/default/autossh    
     $ service autossh start
 
-[]: }}}1
+### Change the configuration
 
-## TODO
+Change the configuration on the **local** machine to suit your needs and restart the service. Examples can be found in [autostart.default]:
 
-  * improve output?
-  * tests?
+    $ nano /etc/default/autossh    
+    $ service autossh restart
+    
+
+## Author
+
+Original work by [Felix C. Stegerman](mailto:flx@obfusk.net)
+
+Updated documentation and examples by Joacim Breiler
 
 ## License
-[]: {{{1
 
-  GPLv2 [1].
+Copyright (C) 2013 Felix C. Stegerman. Released under [GPLv2 License](https://www.gnu.org/licenses/old-licenses/gpl-2.0.txt).
 
-[]: }}}1
 
-## References
-[]: {{{1
-
-  [1] GNU General Public License, version 2
-  --- http://www.opensource.org/licenses/GPL-2.0
-
-[]: }}}1
-
-[]: ! ( vim: set tw=70 sw=2 sts=2 et fdm=marker : )
